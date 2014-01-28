@@ -17,22 +17,23 @@ import com.loopj.android.http.JsonHttpResponseHandler;
 public class ImageSearcher {
 	private ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
 	private Activity parentActivity;
-	private String moreResultsUrl;
 	
-	public ImageSearcher(Activity parentActivity) {
+	ImageSearchQuery searchQuery;
+	public ImageSearcher(Activity parentActivity,
+						ImageSearchQuery searchQuery) {
 		this.parentActivity = parentActivity;
+		this.searchQuery = searchQuery;
 	}
 	
 	public void executeRemoteQuery(String queryUrl)
 	{
 	
 		AsyncHttpClient client = new AsyncHttpClient();
-	//Toast.makeText(parentActivity, "Searching using " + queryUrl, Toast.LENGTH_SHORT).show();
+		Log.d("DEBUG", "QUERY: " + queryUrl);
 		client.get(queryUrl, 
 					new JsonHttpResponseHandler() {
 						public void onSuccess(JSONObject response) {
 							JSONArray imageJsonResults = null;
-							JSONObject cursorJsonResults = null;
 
 							try {
 								imageJsonResults = 
@@ -41,30 +42,22 @@ public class ImageSearcher {
 								
 								SearchActivity searchActivity = (SearchActivity) parentActivity;
 								searchActivity.getImageArrayAdapter().notifyDataSetChanged();
-								cursorJsonResults = 
-										response.getJSONObject("responseData").getJSONObject("cursor");
-								moreResultsUrl = cursorJsonResults.getString("moreResultsUrl");
 								
-							//	Toast.makeText(parentActivity, "Cursor string " + moreResultsUrl, Toast.LENGTH_SHORT).show();
-								Log.d("DEBUG", imageResults.toString());
-								Log.d("DEBUG", "moreResults" + moreResultsUrl);
 							} catch (JSONException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 						}
+						public void onFailure(JSONObject response) {
+							Toast.makeText(parentActivity, "Failed to connect to server.", Toast.LENGTH_SHORT).show();
+						}
 					});
 	}
 	
-	public void executeImageSearchQuery(String baseUrl, String keyword, int startArg)
+	public void executeImageSearchQuery(ImageSearchQuery searchQuery)
 	{
-		String queryUrl = baseUrl + "?rsz=8&" + "start=" + startArg + "&v=1.0&q=" + Uri.encode(keyword);
-		executeRemoteQuery(queryUrl);
-	}
-
-	public void fetchNextSet()
-	{
-		executeRemoteQuery(moreResultsUrl);
+		this.searchQuery = searchQuery;
+		executeRemoteQuery(searchQuery.toString());
 	}
 
 	

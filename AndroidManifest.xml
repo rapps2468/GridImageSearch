@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-sdk
-        android:minSdkVersion="10"
+        android:minSdkVersion="14"
         android:targetSdkVersion="19" />
 
     <application
@@ -26,7 +26,20 @@
         </activity>
         <activity
             android:name="com.android.gridimagesearch.ImageViewer"
-            android:label="@string/title_activity_image_viewer" >
+            android:label="@string/title_activity_image_viewer"
+            android:parentActivityName="com.android.gridimagesearch.SearchActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.android.gridimagesearch.SearchActivity" />
+             
+        </activity>
+        <activity
+            android:name="com.android.gridimagesearch.SetFiltersActivity"
+            android:label="@string/title_activity_set_filters"
+            android:parentActivityName="com.android.gridimagesearch.SearchActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.android.gridimagesearch.SearchActivity" />
         </activity>
     </application>
 

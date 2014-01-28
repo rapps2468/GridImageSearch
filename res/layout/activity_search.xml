@@ -2,11 +2,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".SearchActivity" >
+    tools:context=".SetFiltersActivity" >
 
     <EditText
         android:id="@+id/etKeyword"
@@ -27,6 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/etKeyword"
         android:layout_alignParentRight="true"
+        android:layout_toRightOf="@+id/etKeyword"
         android:text="@string/search" 
         android:onClick="executeImageSearch"/>
 
@@ -36,7 +38,13 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_below="@+id/etKeyword"
-        android:numColumns="3" >
+        android:numColumns="3"
+        android:verticalSpacing="2dp" 
+        android:horizontalSpacing="2dp"
+    	android:scrollingCache="true" 
+    	android:smoothScrollbar="true"
+        
+         >
     </GridView>
 
 

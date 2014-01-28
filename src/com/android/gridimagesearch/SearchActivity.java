@@ -1,16 +1,16 @@
 package com.android.gridimagesearch;
 
-import java.util.ArrayList;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,8 +21,7 @@ import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.Toast;
 
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.JsonHttpResponseHandler;
+import com.loopj.android.image.SmartImageView;
 
 public class SearchActivity extends Activity {
 
@@ -32,6 +31,12 @@ public class SearchActivity extends Activity {
 	private ImageResultArrayAdapter imageArrayAdapter;
 	private ImageSearcher imageSearcher;
 	private String curKeyword;
+	private ImageSearchQuery currentQuery;
+	private SearchFilters searchFilters;
+
+	private final int SET_FILTERS_REQUEST = 1;
+
+	
 	
 	private EndlessScrollListener scrollListener;
 	
@@ -58,25 +63,29 @@ public class SearchActivity extends Activity {
 		
 		setupViews();
 		
+		searchFilters = new SearchFilters();
+		currentQuery = new ImageSearchQuery("");
 		
-		imageSearcher = new ImageSearcher(this);
+		imageSearcher = new ImageSearcher(this, currentQuery);
 		imageArrayAdapter = new ImageResultArrayAdapter(this, 
 														imageSearcher.getImageResults());
 		gvImageResults.setAdapter(imageArrayAdapter);
-
-		
 		
 		gvImageResults.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> adapter, View parent, int position,
 					long rowId) {
-				
+			/*	
 				ImageResult imageResult = (ImageResult) imageSearcher.getImageResults().get(position);
 				Intent i = new Intent(Intent.ACTION_VIEW);
 				i.setData(Uri.parse(imageResult.getFullUrl()));
 				startActivity(i);
-			
+			*/
+				Intent i = new Intent(getApplicationContext(), ImageViewer.class);
+				ImageResult imageResult = (ImageResult) gvImageResults.getItemAtPosition(position);
+				i.putExtra("result", imageResult);
+				startActivity(i);
 			}
 		});
 
@@ -85,7 +94,7 @@ public class SearchActivity extends Activity {
 	        public void onLoadMore(int page, int totalItemsCount) {
 	                // Triggered only when new data needs to be appended to the list
 	                // Add whatever code is needed to append new items to your AdapterView
-	            customLoadMoreDataFromApi(page * 8); 
+	            customLoadMoreDataFromApi(totalItemsCount); 
 	        }
 	    };
 	        
@@ -99,8 +108,8 @@ public class SearchActivity extends Activity {
 	
     // Append more data into the adapter
     public void customLoadMoreDataFromApi(int offset) {
-    	imageSearcher.executeImageSearchQuery("https://ajax.googleapis.com/ajax/services/search/images", 
-    			curKeyword, offset);
+    	currentQuery.setStartArg(offset);
+    	imageSearcher.executeImageSearchQuery(currentQuery);
     }
     
     
@@ -111,14 +120,26 @@ public class SearchActivity extends Activity {
 		return true;
 	}
 
+	
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    	super.onActivityResult(requestCode, resultCode, data);
+		if ((resultCode == RESULT_OK) && (requestCode == SET_FILTERS_REQUEST)) {
+			searchFilters = (SearchFilters) data.getSerializableExtra("search_filters");
+		}
+	}
+    
+    
 	public void executeImageSearch(View v)
 	{
 		scrollListener.reset();
-		imageSearcher.getImageResults().clear();
-		imageArrayAdapter.notifyDataSetChanged();
+		imageArrayAdapter.clear();
 		curKeyword = etKeyword.getText().toString();
-		Toast.makeText(getApplicationContext(), "Searching for images.", Toast.LENGTH_SHORT).show();
-        imageSearcher.executeImageSearchQuery("https://ajax.googleapis.com/ajax/services/search/images", curKeyword, 0);
+		Toast.makeText(getApplicationContext(), "Searching for images...", Toast.LENGTH_SHORT).show();
+		currentQuery.setSearchFilters(searchFilters);
+		currentQuery.setStartArg(0);
+		currentQuery.setKeyword(curKeyword);
+        imageSearcher.executeImageSearchQuery(currentQuery);
 	}
 		
 
@@ -126,6 +147,9 @@ public class SearchActivity extends Activity {
 	public void setFiltersAction(MenuItem mi)
 	{
 		Toast.makeText(getApplicationContext(), "setFiltersAction", Toast.LENGTH_SHORT).show();
+        Intent intentSetFilters = new Intent(this, SetFiltersActivity.class);
+        intentSetFilters.putExtra("search_filters", searchFilters);
+		startActivityForResult(intentSetFilters, SET_FILTERS_REQUEST);
 	}
 	
 	private void setupViews()
